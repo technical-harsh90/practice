@@ -1,0 +1,30 @@
+@this(converter: utils.Converter)
+@(title: String, loginForm: play.api.data.Form[(String, String)])(implicit requestHeader: RequestHeader, messagesProvider: MessagesProvider)
+
+@import helper._
+@import utils.MyHelpers._
+
+@main(title) {
+
+    Number 5 isEven : <b>@(converter.isEven(5))</b>
+
+    @helper.form(action = routes.HomeController.login()) {
+        <table>
+            <tr>
+                <td>Username</td>
+                <td>@helper.inputText(loginForm("username"))</td>
+            </tr>
+
+            <tr>
+                <td>Password</td>
+                <td>@helper.inputPassword(loginForm("password"))</td>
+            </tr>
+
+            <tr colspan="2">
+                @CSRF.formField
+                <td><input type="submit" value="Login"/></td>
+            </tr>
+        </table>
+    }
+
+}
