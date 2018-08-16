@@ -1,19 +1,20 @@
 package controllers
 
 import javax.inject._
-import play.api.data._
 import play.api.data.Forms._
+import play.api.data._
 import play.api.i18n.I18nSupport
-import play.api.libs.json.JsValue
-import play.api.mvc.{AbstractController, Action, AnyContent, ControllerComponents}
+import play.api.mvc._
+import play.filters.csrf.CSRF
+import utils.Constants
+import views.html._
 
 /**
   * This controller creates an `Action` to handle HTTP requests to the
   * application's home page.
   */
-@Singleton
-class HomeController @Inject()(numberTemplate: views.html.NumberTemplate, cc: ControllerComponents)
-  extends AbstractController(cc) with I18nSupport {
+class HomeController @Inject()(cc: ControllerComponents)
+  extends AbstractController(cc) with I18nSupport with Constants {
 
   /**
     * Create an Action to render an HTML page.
@@ -25,23 +26,26 @@ class HomeController @Inject()(numberTemplate: views.html.NumberTemplate, cc: Co
   val loginForm = Form(
     tuple(
       "username" -> nonEmptyText,
-      "password" -> nonEmptyText(5, 8)
+      "password" -> text(5, 10)
     )
   )
 
-  def index() = Action { implicit request =>
-    Ok(numberTemplate("Login Form", loginForm))
+  def index(): Action[AnyContent] = Action { implicit request =>
+    Ok(NumberTemplate(loginForm))
   }
 
-  def login: Action[AnyContent] = Action { implicit request =>
-    loginForm.bindFromRequest.fold(
-      formWithError => {
-        BadRequest(numberTemplate("Login Form", formWithError))
-      },
-      validForm => {
-        Ok("welcome "+validForm)
-      }
-    )
-
+  def login = Action { implicit request =>
+    CSRF.getToken.fold(BadRequest(CSRF_TOKEN_NOT_FOUND)) { _ =>
+      loginForm.bindFromRequest.fold(
+        formWithError => {
+          BadRequest(NumberTemplate(formWithError))
+        },
+        validForm => {
+          Redirect(routes.HomeController.index())
+            .flashing("username" -> validForm._1)
+        }
+      )
+    }
   }
+
 }
